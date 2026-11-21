@@ -1,0 +1,851 @@
+/* The Organize page, on top of app.css: the cards, buttons, form fields,
+   progress bar and color tokens all come from there. Only the pieces this
+   page adds live here, and they take every color from the tokens, so dark
+   mode follows on its own. Color carries the same meaning as on the main
+   page: amber = needs a look (moves, skipped songs, untagged), blue =
+   information (copies, possible duplicates), red = failed, green = done. */
+
+/* native controls (scrollbars, number spinners, the select popup) follow
+   the same light or dark theme as the tokens */
+:root {
+  color-scheme: light dark;
+}
+
+/* a table of songs needs more room than the download form */
+.organize {
+  max-width: 1080px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* one focus ring for everything this page adds */
+.back-link:focus-visible,
+.footer a:focus-visible,
+.drive-chip:focus-visible,
+button.summary-pill:focus-visible,
+.filters > summary:focus-visible,
+.sort-button:focus-visible,
+.tab:focus-visible,
+.tab-panel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.back-link:focus-visible,
+.footer a:focus-visible,
+.filters > summary:focus-visible,
+.sort-button:focus-visible {
+  border-radius: 4px;
+}
+
+/* app.css styles text and number fields; the search box looks the same */
+.organize input[type="search"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* lists that are rows of chips or notes, not bullets */
+.drive-chips,
+.summary-pills,
+.conflicts,
+.failed-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* the line under a control that says what happened */
+.scan-status,
+.action-message,
+.change-result {
+  margin: 10px 0 0;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.action-message:empty,
+.change-result:empty,
+.conflicts:empty,
+.failed-list:empty,
+.example:empty,
+.table-status:empty,
+.filter-count:empty {
+  display: none;
+}
+
+.scan-status[data-state="done"],
+.action-message[data-kind="ok"],
+.change-result[data-kind="ok"] {
+  color: var(--ok);
+}
+
+.action-message[data-kind="warn"],
+.change-result[data-kind="warn"] {
+  color: var(--warn);
+}
+
+.scan-status[data-state="error"],
+.action-message[data-kind="fail"],
+.change-result[data-kind="fail"] {
+  color: var(--fail);
+}
+
+/* --- 1. the folder --- */
+
+.drives {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 10px;
+}
+
+.drives-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.drive-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.drive-chip {
+  max-width: 100%;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.drive-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* the depth beside a wide Scan button; the button drops below on a phone */
+.scan-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 12px;
+}
+
+.scan-row .depth-field {
+  flex: 0 1 220px;
+  margin-bottom: 0;
+}
+
+.scan-row .button.primary {
+  flex: 1 1 160px;
+  width: auto;
+}
+
+.scan-status {
+  min-height: 1.4em;
+}
+
+.scan-status[data-state="working"] {
+  color: var(--info);
+}
+
+/* a small turning ring while the scan reads the drive */
+.scan-status[data-state="working"]::before {
+  content: "";
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 8px;
+  vertical-align: -0.1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: organize-spin 0.8s linear infinite;
+}
+
+@keyframes organize-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-status[data-state="working"]::before {
+    animation: none;
+  }
+}
+
+/* --- 2. the songs --- */
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 12px;
+}
+
+.card-head h2 {
+  margin: 0;
+}
+
+.library-root {
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* counts across the whole folder; the untagged and duplicate ones double as
+   quick filters */
+.summary-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-bottom: 14px;
+}
+
+.summary-pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.summary-pill strong {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+button.summary-pill {
+  cursor: pointer;
+  transition: border-color 120ms ease;
+}
+
+button.summary-pill:hover {
+  border-color: currentColor;
+}
+
+/* on: outlined, so it reads as pressed in both themes */
+button.summary-pill[aria-pressed="true"] {
+  border-color: currentColor;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+/* small labels in the table and the plan: amber needs a look, blue informs */
+.tag-chip {
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+:is(.summary-pill, .tag-chip)[data-kind="warn"] {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+:is(.summary-pill, .tag-chip)[data-kind="info"] {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.summary-pill[data-kind="ok"] {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.filters {
+  margin: 0 0 14px;
+  padding: 10px 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+}
+
+.filters > summary {
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filters[open] > summary {
+  margin-bottom: 10px;
+}
+
+.filter-count {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* the fields sit on the box's darker surface, so they take the card color */
+.filters input[type="search"],
+.filters input[type="number"],
+.filters select {
+  background: var(--surface);
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 10px 12px;
+}
+
+.filter-grid .field {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.filter-search {
+  grid-column: 1 / -1;
+}
+
+/* fieldsets without their frame: Year, Length, and the copy/move choices */
+.range,
+.choice-group {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.range legend,
+.choice-group legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.range-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.filter-checks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+  margin-top: 12px;
+}
+
+.filter-checks label.check {
+  margin-top: 0;
+}
+
+.filter-checks .button {
+  margin-left: auto;
+}
+
+.selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.selection-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.selection-count {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Tables scroll inside their own box, never the page; the column headings
+   stay in view while the rows scroll under them. */
+.table-scroll {
+  max-height: min(70vh, 760px);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.song-table,
+.plan-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+}
+
+.song-table th,
+.song-table td,
+.plan-table th,
+.plan-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.song-table tbody tr:last-child > *,
+.plan-table tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.song-table thead th,
+.plan-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-2);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* each row's title is its header cell, but reads as normal text */
+.song-table tbody th {
+  font-weight: 400;
+}
+
+.song-table tbody tr:hover > * {
+  background: var(--surface-2);
+}
+
+.song-table tbody tr.is-selected > * {
+  background: var(--accent-soft);
+}
+
+.song-table tbody tr.is-selected > :first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* tabular figures, right-aligned, so lengths and sizes line up */
+.song-table .num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.col-check,
+.col-kind {
+  width: 1%;
+}
+
+/* the title (and file name under it) gets the biggest share of the row */
+.col-title {
+  width: 28%;
+}
+
+.song-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* bigger ticks for fingers */
+@media (pointer: coarse) {
+  .song-table input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.song-name {
+  min-width: 11rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.song-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.song-file {
+  overflow-wrap: anywhere;
+}
+
+.cell-text {
+  min-width: 7rem;
+  overflow-wrap: anywhere;
+}
+
+.blank {
+  color: var(--muted);
+}
+
+.table-empty {
+  padding: 28px 12px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* column headings sort the table: ↕ until picked, then ↑ or ↓ */
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sort-button::after {
+  content: "↕";
+  opacity: 0.35;
+}
+
+.sort-button:hover {
+  color: var(--text);
+}
+
+.song-table thead th[aria-sort] {
+  color: var(--accent);
+}
+
+th[aria-sort="ascending"] .sort-button::after {
+  content: "↑";
+  opacity: 1;
+}
+
+th[aria-sort="descending"] .sort-button::after {
+  content: "↓";
+  opacity: 1;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  margin-top: 12px;
+}
+
+.pager-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.table-status {
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* --- 3. what to do: four tabs, then Preview and Apply --- */
+
+.action-selection {
+  margin: -8px 0 14px;
+}
+
+/* a segmented control: the open tab is a raised card-colored chip */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+}
+
+.tab {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.tab-panel {
+  min-width: 0;
+  border-radius: var(--radius-small);
+}
+
+.panel-intro {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.choice-group label.check {
+  margin-top: 6px;
+}
+
+.token-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.button.token {
+  font-family: var(--mono);
+}
+
+.playlist-extras {
+  margin-bottom: 4px;
+}
+
+/* the live example of a new name, and the playlist's order */
+.example {
+  margin: 10px 0 0;
+  padding: 8px 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.example[data-kind="warn"] {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.plan-actions .button {
+  min-width: 130px;
+}
+
+.plan-actions .button.primary {
+  width: auto;
+}
+
+.plan {
+  margin-top: 16px;
+}
+
+.plan-heading {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.plan-scroll {
+  max-height: min(55vh, 560px);
+}
+
+/* songs the plan skips (amber) and steps that failed (red), with a bar on
+   the left so they read as notes, not buttons */
+.conflicts,
+.failed-list {
+  display: grid;
+  gap: 4px;
+}
+
+.conflicts {
+  margin-bottom: 10px;
+}
+
+.failed-list {
+  max-height: 260px;
+  margin-top: 10px;
+  overflow-y: auto;
+}
+
+.conflict,
+.failed-item {
+  padding: 6px 10px 6px 12px;
+  border-left: 3px solid;
+  border-radius: var(--radius-small);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.conflict {
+  border-color: var(--warn);
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.failed-item {
+  border-color: var(--fail);
+  background: var(--fail-bg);
+  color: var(--fail);
+}
+
+/* what each step does: copy blue, move amber (it takes a song away from
+   where it was), rename accent, playlist file green, new folder grey */
+.op-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--skip-bg);
+  color: var(--skip);
+}
+
+.op-chip[data-kind="copy"] {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.op-chip[data-kind="move"] {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.op-chip[data-kind="rename"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.op-chip[data-kind="write-m3u"] {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.op-path {
+  min-width: 14rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.plan-more {
+  margin-top: 10px;
+}
+
+/* --- 4. the last change --- */
+
+.change-label {
+  margin: -6px 0 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.change-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* narrow screens: tabs two by two, full-width buttons, tighter cells */
+@media (max-width: 559px) {
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .plan-actions .button {
+    flex: 1 1 0;
+  }
+
+  .filter-checks .button {
+    margin-left: 0;
+  }
+
+  .table-scroll {
+    max-height: 65vh;
+  }
+
+  .song-table th,
+  .song-table td,
+  .plan-table th,
+  .plan-table td {
+    padding: 6px 8px;
+  }
+}

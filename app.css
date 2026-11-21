@@ -1,0 +1,1400 @@
+/* ZipifyTunes page styles. Colors live in the tokens below; dark mode just
+   swaps the tokens. Status colors carry meaning: green = saved, red =
+   failed, grey = skipped, amber = paused/stopped/retrying, blue/indigo =
+   working (blue also marks a song reused from another playlist). */
+
+:root {
+  --bg: #f4f5fa;
+  --surface: #ffffff;
+  --surface-2: #f8f9fc;
+  --text: #1c2233;
+  --muted: #5d6578;
+  --border: #e2e5ee;
+
+  --accent: #5a4fdc;
+  --accent-2: #12a89c;
+  --accent-soft: #ecebfd;
+
+  --ok: #1d8a4e;
+  --ok-bg: #e4f6ec;
+  --fail: #c93636;
+  --fail-bg: #fdeaea;
+  --skip: #6b7385;
+  --skip-bg: #eef0f4;
+  --warn: #a86400;
+  --warn-bg: #fff2d9;
+  --info: #2f63c9;
+  --info-bg: #e7effd;
+
+  --radius: 12px;
+  --radius-small: 8px;
+  --shadow: 0 1px 2px rgb(20 24 40 / 6%), 0 4px 16px rgb(20 24 40 / 6%);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --duration: 300ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1220;
+    --surface: #181c2e;
+    --surface-2: #1f2438;
+    --text: #e8eaf2;
+    --muted: #9aa2b8;
+    --border: #2b3149;
+
+    --accent: #8b82ff;
+    --accent-2: #2fd2c2;
+    --accent-soft: #2a2852;
+
+    --ok: #4cd08a;
+    --ok-bg: #173527;
+    --fail: #ff7a7a;
+    --fail-bg: #3d1c22;
+    --skip: #a3abbf;
+    --skip-bg: #262b3f;
+    --warn: #ffb648;
+    --warn-bg: #3a2c12;
+    --info: #7aa7ff;
+    --info-bg: #1b2a4a;
+
+    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 16px rgb(0 0 0 / 25%);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.45;
+}
+
+.app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 16px 48px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* --- header --- */
+
+.app-header h1 {
+  margin: 0;
+  font-size: 2.1rem;
+  letter-spacing: -0.02em;
+}
+
+.app-header h1 span {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tagline {
+  margin: 4px 0 20px;
+  color: var(--muted);
+}
+
+/* --- cards --- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+}
+
+/* --- form --- */
+
+.field {
+  margin-bottom: 14px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.optional {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
+input[type="file"] {
+  font: inherit;
+  color: var(--muted);
+}
+
+input:focus-visible,
+select:focus-visible,
+.button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.save-row {
+  display: flex;
+  gap: 8px;
+}
+
+.save-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.hint {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+label.check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 10px;
+  font-weight: 400;
+  font-size: 0.85rem;
+}
+
+label.check input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+/* Extras: a checkbox per option, its hint under the words (two columns
+   while they fit, one on a phone) */
+.extras {
+  min-width: 0;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+}
+
+.extras legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.extras-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 10px 16px;
+}
+
+.extra {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  align-items: start;
+}
+
+.extra input {
+  margin: 3px 0 0;
+  accent-color: var(--accent);
+}
+
+.extra label {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.extra .hint {
+  grid-column: 2;
+  margin-top: 0;
+}
+
+/* --- buttons --- */
+
+.button {
+  border: 1px solid transparent;
+  border-radius: var(--radius-small);
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease, background-color 120ms ease;
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.button.primary {
+  width: 100%;
+  padding: 11px 14px;
+  color: #fff;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.button.secondary {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.button.danger {
+  background: var(--fail-bg);
+  color: var(--fail);
+  border-color: color-mix(in srgb, var(--fail) 30%, transparent);
+}
+
+/* --- the run panel --- */
+
+.run-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.run-head h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.run-controls {
+  display: flex;
+  gap: 8px;
+}
+
+/* shown while the server keeps the Mac awake for the run */
+.awake-badge {
+  width: fit-content;
+  max-width: 100%;
+  margin: -4px 0 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* overall progress: gradient with moving stripes while working */
+.progress {
+  height: 14px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform var(--duration) ease;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(255 255 255 / 22%) 0 10px,
+      transparent 10px 20px
+    ),
+    linear-gradient(90deg, var(--accent), var(--accent-2));
+  background-size: 28px 28px, 100% 100%;
+  animation: stripes 1s linear infinite;
+}
+
+.progress[data-state="paused"] .progress-fill,
+.progress[data-state="stopped"] .progress-fill {
+  background: linear-gradient(90deg, var(--warn), color-mix(in srgb, var(--warn) 70%, #fff));
+  animation: none;
+}
+
+.progress[data-state="stopping"] .progress-fill,
+.progress[data-state="failed"] .progress-fill {
+  background: var(--fail);
+  animation: none;
+}
+
+.progress[data-state="done"] .progress-fill {
+  background: var(--ok);
+  animation: none;
+}
+
+@keyframes stripes {
+  to {
+    background-position: 28px 0, 0 0;
+  }
+}
+
+/* (the charts never animate; they're listed so nothing added later does) */
+@media (prefers-reduced-motion: reduce) {
+  .progress-fill,
+  .song-bar span,
+  .chart,
+  .chart * {
+    animation: none;
+    transition: none;
+  }
+}
+
+.progress-text {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* songs being worked on right now (one row each when downloading in parallel) */
+.active-songs {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.song {
+  padding: 10px 12px;
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  border-left: 4px solid var(--info);
+}
+
+.song[data-phase="converting"],
+.song[data-phase="tagging"] {
+  border-left-color: var(--accent-2);
+}
+
+/* a failed download waiting to be tried again */
+.song[data-phase="retrying"] {
+  border-left-color: var(--warn);
+}
+
+.song-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.song-detail {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.song-bar {
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.song-bar span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform var(--duration) ease;
+  background: var(--info);
+}
+
+.song[data-phase="converting"] .song-bar span,
+.song[data-phase="tagging"] .song-bar span {
+  background: var(--accent-2);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.stat {
+  padding: 10px 12px;
+  border-radius: var(--radius-small);
+  background: var(--accent-soft);
+}
+
+.stat dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.stat dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.count {
+  font-weight: 700;
+}
+
+.count.ok {
+  color: var(--ok);
+}
+
+.count.skip {
+  color: var(--skip);
+}
+
+.count.fail {
+  color: var(--fail);
+}
+
+.count.review {
+  color: var(--warn);
+}
+
+/* --- the run panel: time left, and how many download at once --- */
+
+/* two boxes side by side, stacked before the slider gets too short to drag
+   (and never wider than a small phone's card) */
+.run-live {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.live-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 14px 12px;
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.live-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+/* The time left is the biggest thing on the panel. Its edge takes the run's
+   color, like the progress bar: working, paused, stopping, done. */
+.countdown {
+  border-left: 4px solid var(--accent);
+}
+
+/* tabular figures: a time ticking every second mustn't shuffle sideways */
+.countdown-value {
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* words ("Working out…", "Paused") are set smaller than a time, on a line of
+   the same height, so the box doesn't jump when one replaces the other */
+.countdown-value[data-kind="text"] {
+  font-size: 1.5rem;
+  line-height: 1.76;
+  letter-spacing: 0;
+}
+
+.countdown-note {
+  min-height: 1.3em; /* keeps its line while empty */
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.countdown[data-state="pending"] .countdown-value {
+  color: var(--muted);
+}
+
+.countdown[data-state="paused"],
+.countdown[data-state="stopped"] {
+  border-left-color: var(--warn);
+}
+
+.countdown[data-state="paused"] .countdown-value,
+.countdown[data-state="stopped"] .countdown-value {
+  color: var(--warn);
+}
+
+.countdown[data-state="stopping"],
+.countdown[data-state="failed"] {
+  border-left-color: var(--fail);
+}
+
+.countdown[data-state="stopping"] .countdown-value {
+  color: var(--fail);
+}
+
+.countdown[data-state="done"] {
+  border-left-color: var(--ok);
+}
+
+.countdown[data-state="done"] .countdown-value {
+  color: var(--ok);
+}
+
+/* − 3 + and the slider, in one row */
+.stepper {
+  display: grid;
+  grid-template-columns: auto 2.6rem auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 2px;
+}
+
+.button.stepper-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.stepper-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.parallel-slider {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.parallel-slider:disabled {
+  opacity: 0.55;
+}
+
+.parallel-running {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* --- Live stats: charts of the run, and the songs that just finished --- */
+
+.stats-name {
+  font-weight: 400;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* the two line charts side by side; the ring and the recent songs run the
+   full width below them; one column on narrow screens */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.chart-box {
+  min-width: 0;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.chart-box.is-wide {
+  grid-column: 1 / -1;
+}
+
+.chart-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.chart-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* line samples for the keys, drawn like the lines they name: solid for songs
+   done so far, dashed for the projection at this pace, a thin dashed rule
+   for the average speed */
+.key-line {
+  width: 16px;
+  border-top: 2px solid var(--accent);
+}
+
+.key-line.is-projection {
+  border-top-style: dashed;
+}
+
+.key-line.is-average {
+  border-top: 1px dashed var(--muted);
+}
+
+/* The charts (charts.js) draw with these classes only, so they follow the
+   theme. Lines are thin and grids are hairlines: the data is the loud part. */
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--font);
+  touch-action: pan-y; /* a sideways drag reads values off; up and down still scroll */
+}
+
+.chart:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.chart-grid,
+.chart-axis,
+.chart-crosshair {
+  stroke-width: 1px;
+  shape-rendering: crispEdges;
+}
+
+.chart-grid {
+  stroke: var(--border);
+}
+
+.chart-axis {
+  stroke: color-mix(in srgb, var(--muted) 45%, var(--border));
+}
+
+.chart-crosshair {
+  stroke: var(--muted);
+}
+
+.chart-tick {
+  font-size: 10px;
+  fill: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-readout {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-line,
+.chart-speed-line,
+.chart-projection {
+  fill: none;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-line,
+.chart-projection {
+  stroke: var(--accent);
+}
+
+/* dashed: where the run is heading, not where it has been */
+.chart-projection {
+  stroke-dasharray: 4 5;
+  opacity: 0.75;
+}
+
+.chart-speed-line {
+  stroke: var(--accent-2);
+}
+
+/* a light wash under the speed line, never a solid block */
+.chart-area {
+  fill: var(--accent-2);
+  fill-opacity: 0.12;
+}
+
+.chart-average {
+  stroke: var(--muted);
+  stroke-width: 1px;
+  stroke-dasharray: 3 3;
+}
+
+/* the latest point, ringed in card color so it stands clear of its line */
+.chart-dot {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2px;
+}
+
+.chart-dot-speed {
+  fill: var(--accent-2);
+}
+
+/* where the projection ends: every song done */
+.chart-target {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 1.5px;
+}
+
+.chart-focus {
+  fill: var(--surface);
+  stroke-width: 2px;
+}
+
+.chart-progress .chart-focus {
+  stroke: var(--accent);
+}
+
+.chart-speed .chart-focus {
+  stroke: var(--accent-2);
+}
+
+.chart-placeholder {
+  fill: var(--surface-2);
+}
+
+.chart-note {
+  font-size: 11px;
+  fill: var(--muted);
+}
+
+/* the ring beside its legend; the legend drops below when there's no room */
+.donut-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+}
+
+.donut-frame {
+  flex: none;
+  width: 128px;
+}
+
+/* the same status colors as the counts and the log: green saved, amber to
+   review, grey skipped, red failed; the songs still to go are the track */
+.donut-arc {
+  fill: none;
+}
+
+.donut-arc:hover {
+  opacity: 0.75;
+}
+
+.donut-saved {
+  stroke: var(--ok);
+}
+
+/* copied from another playlist's folder instead of downloaded */
+.donut-reused {
+  stroke: var(--info);
+}
+
+.donut-review {
+  stroke: var(--warn);
+}
+
+.donut-skipped {
+  stroke: var(--skip);
+}
+
+.donut-failed {
+  stroke: var(--fail);
+}
+
+.donut-left {
+  stroke: var(--border);
+}
+
+.donut-value {
+  font-weight: 700;
+  fill: var(--text);
+}
+
+.donut-caption {
+  font-size: 9px;
+  fill: var(--muted);
+}
+
+/* columns no wider than a name and its count, so the two stay together */
+.legend {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 160px));
+  gap: 6px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.legend-swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--border);
+}
+
+/* the "left" swatch is as pale as the track; an outline keeps it visible */
+.legend-swatch[data-part="left"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+.legend-swatch[data-part="saved"] {
+  background: var(--ok);
+}
+
+.legend-swatch[data-part="reused"] {
+  background: var(--info);
+}
+
+.legend-swatch[data-part="review"] {
+  background: var(--warn);
+}
+
+.legend-swatch[data-part="skipped"] {
+  background: var(--skip);
+}
+
+.legend-swatch[data-part="failed"] {
+  background: var(--fail);
+}
+
+.legend-count {
+  margin-left: auto;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* newest first. Each row: the outcome chip, the song (and why, when it needs
+   a look), then its size and the time it took. */
+.recent {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recent-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: baseline;
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+}
+
+.recent-item:first-child {
+  padding-top: 2px;
+  border-top: none;
+}
+
+.recent-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--skip-bg);
+  color: var(--skip);
+}
+
+.recent-chip[data-outcome="saved"] {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.recent-chip[data-outcome="reused"] {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.recent-chip[data-outcome="review"] {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.recent-chip[data-outcome="failed"] {
+  background: var(--fail-bg);
+  color: var(--fail);
+}
+
+.recent-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.recent-reason {
+  font-size: 0.75rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.recent-details {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-empty {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* narrow screens: one column of charts, and a song's size and time drop
+   under its title */
+@media (max-width: 559px) {
+  .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recent-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .recent-details {
+    grid-column: 2;
+    white-space: normal;
+  }
+}
+
+/* --- the batch list --- */
+
+.batch {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.batch-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.batch-item[data-status="running"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.batch-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.batch-summary {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.batch-bar {
+  grid-column: 1 / -1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.batch-bar span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform var(--duration) ease;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.batch-item[data-status="done"] .batch-bar span {
+  background: var(--ok);
+}
+
+.batch-item[data-status="failed"] .batch-bar span {
+  background: var(--fail);
+}
+
+.batch-item[data-status="stopped"] .batch-bar span {
+  background: var(--warn);
+}
+
+/* status badge */
+.pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--skip-bg);
+  color: var(--skip);
+}
+
+.pill[data-status="running"] {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.pill[data-status="paused"],
+.pill[data-status="stopped"] {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.pill[data-status="done"] {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.pill[data-status="failed"] {
+  background: var(--fail-bg);
+  color: var(--fail);
+}
+
+/* --- the review list (songs without a sure match) --- */
+
+/* amber like the "to review" count: these songs are waiting on a decision */
+.review-count {
+  margin-left: 6px;
+  vertical-align: middle;
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.review-hint {
+  margin: -8px 0 12px;
+}
+
+/* the table scrolls sideways inside the card rather than widening the page */
+.review-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.review-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.review-table th,
+.review-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.review-table tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+.review-table tbody tr:hover > * {
+  background: var(--surface-2);
+}
+
+.review-table thead th {
+  background: var(--surface-2);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* each row's song is its header cell, but reads as normal text */
+.review-table tbody th {
+  font-weight: 400;
+}
+
+.review-table input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+/* the checkbox and pill columns shrink to fit, the song gets a fair share
+   and the pick list takes the rest */
+.col-check,
+.col-match {
+  width: 1%;
+}
+
+.col-song {
+  width: 38%;
+}
+
+.review-song {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.review-reason {
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* thumbnail on the left; the pick list, then the link and button, beside it */
+.pick {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 4px 8px;
+  align-items: center;
+}
+
+.pick.is-empty {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.review-thumb {
+  grid-row: span 2;
+  width: 64px;
+  height: 36px;
+  border-radius: var(--radius-small);
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.pick select {
+  min-width: min(14rem, 100%);
+  padding: 5px 8px;
+  font-size: 0.8rem;
+}
+
+.pick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: center;
+}
+
+.review-open {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.review-open:hover {
+  text-decoration: underline;
+}
+
+.review-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.review-none {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.button.small {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* how sure a match is */
+.pill[data-label="good"] {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.pill[data-label="possible"] {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.pill[data-label="unlikely"] {
+  background: var(--fail-bg);
+  color: var(--fail);
+}
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+/* "N selected" with Clear list beside it, on the left of Download selected */
+.review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.review-selected {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.review-actions .button.primary {
+  width: auto;
+}
+
+/* narrow screens: the pick cell stacks (thumbnail, list, then link and
+   button) so it wraps instead of pushing the table past the page */
+@media (max-width: 559px) {
+  .review-table th,
+  .review-table td {
+    padding: 6px;
+  }
+
+  .pick {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .review-thumb {
+    grid-row: auto;
+  }
+
+  .col-match .pill {
+    white-space: normal;
+  }
+}
+
+/* --- status log --- */
+
+.log {
+  height: 220px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+.log-line {
+  padding: 1px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.log-line.ok {
+  color: var(--ok);
+}
+
+.log-line.fail {
+  color: var(--fail);
+}
+
+.log-line.skip {
+  color: var(--skip);
+}
+
+/* "↺ " a song copied from another playlist's folder */
+.log-line.reused {
+  color: var(--info);
+}
+
+.log-line.warn,
+.log-line.review {
+  color: var(--warn);
+}
+
+.log-line.heading {
+  margin-top: 6px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* --- footer bits --- */
+
+.steps {
+  margin: 20px 0 8px;
+  padding-left: 20px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.steps a,
+.footer a {
+  color: var(--accent);
+}
+
+.footer {
+  font-size: 0.9rem;
+}

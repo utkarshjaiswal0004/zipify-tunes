@@ -1,253 +1,296 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ZipifyTunes</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 30px;
-      max-width: 600px;
-      margin: auto;
-    }
-    .status {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      background: #f8f8f8;
-      height: 150px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      font-size: 13px;
-    }
-    .controls {
-      margin-bottom: 15px;
-    }
-    label {
-      font-size: 14px;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    /* Old-school progress bar */
-    .progress-wrapper {
-      margin-top: 20px;
-    }
-    .progress-container {
-      width: 100%;
-      background: #ddd;
-      border-radius: 4px;
-      border: 1px solid #bbb;
-      overflow: hidden;
-      height: 20px;
-    }
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background: repeating-linear-gradient(
-        -45deg,
-        #f5f5f5,
-        #f5f5f5 10px,
-        #cfcfcf 10px,
-        #cfcfcf 20px
-      );
-      transition: width 0.3s ease;
-    }
-    .progress-text {
-      margin-top: 5px;
-      font-size: 12px;
-      text-align: right;
-      color: #555;
-    }
-
-    ol.steps {
-      margin-top: 20px;
-      padding-left: 20px;
-      font-size: 14px;
-    }
-    .footer {
-      font-size: 14px;
-    }
-    .footer:hover {
-      text-decoration: none;
-    }
-  </style>
+  <link rel="stylesheet" href="app.css" />
 </head>
 
 <body>
-  <h1>ZipifyTunes</h1>
-  <p>Select your <b>songs.csv</b> file (song, artist, etc. columns)</p>
+  <main class="app">
+    <header class="app-header">
+      <h1>Zipify<span>Tunes</span></h1>
+      <p class="tagline">
+        Playlist CSVs in, tagged MP3s out: as a ZIP, or straight onto a folder or pen drive.
+      </p>
+      <p class="tagline"><a href="organize.html">Organize your songs →</a> sort into folders, rename, make playlists, clean duplicates</p>
+    </header>
 
-  <div class="controls">
-    <input type="file" id="csvFile" accept=".csv"><br><br>
+    <!-- what to download and where -->
+    <section class="card" aria-labelledby="setupHeading">
+      <h2 id="setupHeading">Set up</h2>
 
-    <label for="quality">MP3 Quality:</label>
-    <select id="quality">
-      <option value="0">Best (VBR)</option>
-      <option value="128">128 kbps</option>
-      <option value="192">192 kbps</option>
-      <option value="256">256 kbps</option>
-      <option value="320">320 kbps</option>
-    </select>
-    <br><br>
+      <div class="field">
+        <label for="csvFile">Playlist CSVs</label>
+        <input type="file" id="csvFile" accept=".csv" multiple>
+        <p class="hint">Pick one or more. Each CSV becomes its own playlist, downloaded one after another.</p>
+      </div>
 
-    <button onclick="uploadCSV()">Download MP3s</button>
-  </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="quality">MP3 quality</label>
+          <select id="quality">
+            <option value="0">Best (VBR)</option>
+            <option value="128">128 kbps</option>
+            <option value="192">192 kbps</option>
+            <option value="256">256 kbps</option>
+            <option value="320">320 kbps</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="parallel">Download at once</label>
+          <input type="number" id="parallel" min="1" max="20" step="1" value="3" inputmode="numeric"
+            aria-describedby="parallelHint">
+          <p class="hint" id="parallelHint">
+            Up to 20. More at once is faster, but YouTube may refuse some downloads when too many
+            run together; those land in the review list.
+          </p>
+        </div>
+      </div>
 
-  <!-- Progress wrapper (hidden until download starts) -->
-  <div id="progressWrapper" class="progress-wrapper hidden">
-    <div class="progress-container">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-    <div class="progress-text" id="progressText">Waiting…</div>
-  </div>
+      <div class="field">
+        <label for="cookiesBrowser">YouTube sign-in <span class="optional">(optional)</span></label>
+        <select id="cookiesBrowser" aria-describedby="cookiesHint">
+          <option value="">Don't use</option>
+          <option value="chrome">Chrome</option>
+          <option value="safari">Safari</option>
+          <option value="firefox">Firefox</option>
+          <option value="brave">Brave</option>
+          <option value="edge">Edge</option>
+        </select>
+        <p class="hint" id="cookiesHint">
+          Leave this on "Don't use" unless downloads fail with "confirm you're not a bot". Then pick
+          the browser where you're signed in to YouTube. Chrome, Brave and Edge need your Mac's
+          keychain password (usually your login password) each time unless you choose Always Allow;
+          Safari needs Full Disk Access for this app instead.
+        </p>
+      </div>
 
-  <h3>Status:</h3>
-  <div class="status" id="statusBox"></div>
+      <div class="field">
+        <label for="saveTo">Save to folder <span class="optional">(optional)</span></label>
+        <div class="save-row">
+          <input type="text" id="saveTo" list="driveList" spellcheck="false" autocomplete="off"
+            placeholder="Leave empty to download a ZIP" aria-describedby="saveToHint">
+          <button type="button" id="chooseFolder" class="button secondary">Choose…</button>
+        </div>
+        <datalist id="driveList"></datalist>
+        <p class="hint" id="saveToHint">
+          Click Choose… to pick a folder or pen drive (or type a path). Each playlist goes into
+          its own folder there, named after its CSV.
+        </p>
+        <label class="check">
+          <input type="checkbox" id="skipExisting" checked>
+          Skip songs already saved there, so re-running a playlist carries on where it stopped
+        </label>
+      </div>
 
-  <ol class="steps">
-    <li>
-      Export your Spotify playlist as a CSV from platforms like
-      <a href="https://www.chosic.com/spotify-playlist-exporter/" target="_blank" rel="noopener noreferrer">
-        https://www.chosic.com/spotify-playlist-exporter/
-      </a>
-    </li>
-    <li>Upload the CSV here.</li>
-    <li>
-      Get a ZIP of MP3 files with the chosen quality, embedded album art, and metadata.
-    </li>
-  </ol>
+      <!-- remembered on this browser; the first five go to the server with every run -->
+      <fieldset class="field extras">
+        <legend>Extras</legend>
+        <div class="extras-grid">
+          <div class="extra">
+            <input type="checkbox" id="keepAwake" checked aria-describedby="keepAwakeHint">
+            <label for="keepAwake">Keep my Mac awake while downloading</label>
+            <p class="hint" id="keepAwakeHint">Only while songs download, so a long batch isn't cut off by sleep.</p>
+          </div>
+          <div class="extra">
+            <input type="checkbox" id="numberTracks" aria-describedby="numberTracksHint">
+            <label for="numberTracks">Number the files in playlist order (001 - …)</label>
+            <p class="hint" id="numberTracksHint">Folder only. For stereos that play files in name order.</p>
+          </div>
+          <div class="extra">
+            <input type="checkbox" id="writePlaylist" checked aria-describedby="writePlaylistHint">
+            <label for="writePlaylist">Write a playlist file (.m3u) for car stereos</label>
+            <p class="hint" id="writePlaylistHint">Folder only. Keeps the CSV's order on stereos that read playlists.</p>
+          </div>
+          <div class="extra">
+            <input type="checkbox" id="reuseSongs" checked aria-describedby="reuseSongsHint">
+            <label for="reuseSongs">Reuse songs already on the drive from other playlists</label>
+            <p class="hint" id="reuseSongsHint">Folder only. Copies them instead of downloading them again.</p>
+          </div>
+          <div class="extra">
+            <input type="checkbox" id="autoRetry" checked aria-describedby="autoRetryHint">
+            <label for="autoRetry">Retry failed downloads automatically</label>
+            <p class="hint" id="autoRetryHint">Up to 3 tries, with a short wait between them.</p>
+          </div>
+          <div class="extra">
+            <input type="checkbox" id="notifyDone" checked aria-describedby="notifyDoneHint">
+            <label for="notifyDone">Notify me when a playlist finishes</label>
+            <p class="hint" id="notifyDoneHint">A desktop notification and a short chime. Your browser asks first.</p>
+          </div>
+        </div>
+      </fieldset>
 
-  <a class="footer" href="https://github.com/akhileshthite/zipify-tunes/" target="_blank" rel="noopener noreferrer">
-    Source code
-  </a>
+      <button type="button" id="startButton" class="button primary">Download MP3s</button>
+    </section>
 
-  <script>
-    let progressTimer = null;
+    <!-- the playlist being downloaded right now -->
+    <section class="card hidden" id="runPanel" aria-labelledby="runHeading">
+      <div class="run-head">
+        <h2 id="runHeading">Now: <span id="runName"></span></h2>
+        <div class="run-controls">
+          <button type="button" id="pauseButton" class="button secondary">Pause</button>
+          <button type="button" id="stopButton" class="button danger">Stop</button>
+        </div>
+      </div>
+      <p class="awake-badge hidden" id="awakeBadge"><span aria-hidden="true">☾</span> Keeping your Mac awake</p>
 
-    function log(msg) {
-      const box = document.getElementById("statusBox");
-      box.textContent += msg + "\n";
-      box.scrollTop = box.scrollHeight;
-    }
+      <!-- time left, and how many songs download at once (changeable mid-run) -->
+      <div class="run-live">
+        <div class="live-box countdown" id="countdown" data-state="pending" role="timer"
+          aria-labelledby="countdownLabel">
+          <span class="live-label" id="countdownLabel">Time left</span>
+          <span class="countdown-value" id="countdownValue" data-kind="text">Working out…</span>
+          <span class="countdown-note" id="countdownNote"></span>
+        </div>
 
-    function setProgress(done, total) {
-      const bar = document.getElementById("progressBar");
-      const text = document.getElementById("progressText");
+        <div class="live-box parallel-live" role="group" aria-labelledby="parallelLiveLabel">
+          <span class="live-label" id="parallelLiveLabel">Downloading at once</span>
+          <div class="stepper">
+            <button type="button" id="parallelDown" class="button secondary stepper-button"
+              aria-label="One fewer at once" disabled>−</button>
+            <output class="stepper-value" id="parallelValue" for="parallelSlider" aria-live="polite">3</output>
+            <button type="button" id="parallelUp" class="button secondary stepper-button"
+              aria-label="One more at once" disabled>+</button>
+            <input type="range" id="parallelSlider" class="parallel-slider" min="1" max="20" step="1"
+              value="3" aria-valuetext="3 songs at once" aria-labelledby="parallelLiveLabel"
+              aria-describedby="parallelRunning" disabled>
+          </div>
+          <span class="parallel-running" id="parallelRunning"
+            title="Songs being searched for, downloaded, converted or tagged right now">0 songs in progress</span>
+        </div>
+      </div>
 
-      if (!total || total === 0) {
-        bar.style.width = "0%";
-        text.textContent = "Waiting…";
-        return;
-      }
+      <div class="progress" id="progress" data-state="running" role="progressbar"
+        aria-labelledby="runHeading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="progress-fill" id="progressBar"></div>
+      </div>
+      <div class="progress-text" id="progressText">Waiting…</div>
 
-      const pct = Math.round((done / total) * 100);
-      bar.style.width = pct + "%";
-      text.textContent = `${done} / ${total} songs (${pct}%)`;
-    }
+      <!-- not a live region: it changes every second, and the status log
+           below already announces each song as it finishes -->
+      <ul class="active-songs" id="activeSongs" aria-label="Songs in progress"></ul>
 
-    function formatBytes(bytes) {
-      if (bytes >= 1024 ** 3) return (bytes / 1024 ** 3).toFixed(1) + " GB";
-      return Math.round(bytes / 1024 ** 2) + " MB";
-    }
+      <dl class="stats">
+        <div class="stat">
+          <dt>Songs</dt>
+          <dd id="statCounts">—</dd>
+        </div>
+        <div class="stat">
+          <dt>Downloaded</dt>
+          <dd id="statSize">—</dd>
+        </div>
+        <div class="stat">
+          <dt>Time</dt>
+          <dd id="statTime">—</dd>
+        </div>
+      </dl>
+    </section>
 
-    function stopPolling() {
-      clearInterval(progressTimer);
-      progressTimer = null;
-      document.getElementById("progressWrapper").classList.add("hidden");
-    }
+    <!-- charts of the run downloading now; they stay up once it's over -->
+    <section class="card hidden" id="statsPanel" aria-labelledby="statsHeading">
+      <h2 id="statsHeading">Live stats <span class="stats-name" id="statsName"></span></h2>
+      <div class="stats-grid">
+        <figure class="chart-box">
+          <figcaption class="chart-caption">
+            Songs done
+            <span class="chart-key"><span class="key-line"></span>so far</span>
+            <span class="chart-key"><span class="key-line is-projection"></span>at this pace</span>
+          </figcaption>
+          <div class="chart-frame" id="progressChart"></div>
+        </figure>
 
-    async function pollJob(jobId) {
-      let job;
-      try {
-        const res = await fetch("/progress?job=" + encodeURIComponent(jobId));
-        if (!res.ok) {
-          // the job vanished (server restarted) — nothing more to wait for
-          stopPolling();
-          log("Lost track of the job on the server. Please try again.");
-          return;
-        }
-        job = await res.json();
-      } catch (e) {
-        return; // transient network blip, try again next tick
-      }
+        <figure class="chart-box">
+          <figcaption class="chart-caption">
+            Saving speed (last 30 s)
+            <span class="chart-key">MB/s</span>
+            <span class="chart-key"><span class="key-line is-average"></span>average</span>
+          </figcaption>
+          <div class="chart-frame" id="speedChart"></div>
+        </figure>
 
-      setProgress(job.done, job.total);
+        <figure class="chart-box is-wide">
+          <figcaption class="chart-caption">Outcomes</figcaption>
+          <div class="donut-row">
+            <div class="donut-frame" id="outcomeChart"></div>
+            <ul class="legend" id="outcomeLegend" aria-label="Songs by outcome"></ul>
+          </div>
+        </figure>
 
-      if (job.status === "running") return;
+        <section class="chart-box is-wide" aria-labelledby="recentHeading">
+          <h3 class="chart-caption" id="recentHeading">
+            Recently finished <span class="chart-key">newest first</span>
+          </h3>
+          <ol class="recent" id="recentList"></ol>
+        </section>
+      </div>
+    </section>
 
-      stopPolling();
+    <!-- every run in this batch (CSVs, then any picked songs), with its outcome -->
+    <section class="card hidden" id="batchPanel" aria-labelledby="batchHeading">
+      <h2 id="batchHeading">Batch</h2>
+      <ol class="batch" id="batchList"></ol>
+    </section>
 
-      if (job.status === "error") {
-        log(job.error || "Server error.");
-        job.failures.forEach((f) => log("  • " + f));
-        return;
-      }
+    <!-- songs without a sure YouTube match: pick the right upload, then download them -->
+    <section class="card hidden" id="reviewPanel" aria-labelledby="reviewHeading">
+      <h2 id="reviewHeading">Review <span class="pill review-count" id="reviewCount">0</span></h2>
+      <p class="hint review-hint" id="reviewHint">
+        These songs had no exact match on YouTube, their download failed, or Stop (or a failed run)
+        kept them from downloading. Pick the right version, tick the ones you want, then download
+        them; a failed song offers the same video again first, to retry it.
+      </p>
 
-      // status === "ready"
-      log(
-        `Got ${job.downloaded} of ${job.total} song(s), ${formatBytes(job.zipBytes)}` +
-          (job.failures.length ? ` — ${job.failures.length} failed:` : "")
-      );
-      job.failures.forEach((f) => log("  • " + f));
+      <div class="review-scroll">
+        <table class="review-table" aria-labelledby="reviewHeading" aria-describedby="reviewHint">
+          <thead>
+            <tr>
+              <th scope="col" class="col-check">
+                <input type="checkbox" id="reviewSelectAll" aria-label="Select all">
+              </th>
+              <th scope="col" class="col-song">Song</th>
+              <th scope="col" class="col-pick">Pick a match</th>
+              <th scope="col" class="col-match">Match</th>
+            </tr>
+          </thead>
+          <tbody id="reviewBody"></tbody>
+        </table>
+      </div>
 
-      // Let the browser download the ZIP itself: it streams straight to disk
-      // with its own progress indicator instead of buffering it in the page.
-      window.location.href = "/download/" + encodeURIComponent(job.id);
-      log("Saving songs.zip — watch your browser's downloads.");
-    }
+      <!-- the list is kept on this browser across reloads, until cleared -->
+      <div class="review-actions">
+        <div class="review-meta">
+          <span class="review-selected" id="reviewSelected" aria-live="polite">0 selected</span>
+          <button type="button" id="reviewClear" class="button secondary small" disabled>Clear list</button>
+        </div>
+        <button type="button" id="reviewDownload" class="button primary" disabled>Download selected</button>
+      </div>
+    </section>
 
-    async function uploadCSV() {
-      const fileInput = document.getElementById("csvFile");
-      const qualitySelect = document.getElementById("quality");
-      const progressWrapper = document.getElementById("progressWrapper");
+    <section class="card" aria-labelledby="statusHeading">
+      <h2 id="statusHeading">Status</h2>
+      <div class="log" id="statusBox" aria-live="polite"></div>
+    </section>
 
-      if (!fileInput.files.length) {
-        alert("Please select a CSV file.");
-        return;
-      }
+    <ol class="steps">
+      <li>
+        Export your Spotify playlist as a CSV from platforms like
+        <a href="https://www.chosic.com/spotify-playlist-exporter/" target="_blank" rel="noopener noreferrer">chosic.com's Spotify playlist exporter</a>.
+      </li>
+      <li>Pick one or more CSVs here.</li>
+      <li>
+        Get a ZIP of MP3 files with the chosen quality, embedded album art, and metadata,
+        or have them saved straight to a folder or pen drive.
+      </li>
+    </ol>
 
-      if (progressTimer) {
-        log("A run is already in progress.");
-        return;
-      }
+    <footer class="footer">
+      <a href="https://github.com/akhileshthite/zipify-tunes/" target="_blank" rel="noopener noreferrer">Source code</a>
+    </footer>
+  </main>
 
-      const formData = new FormData();
-      formData.append("csv", fileInput.files[0]);
-      formData.append("quality", qualitySelect.value);
-
-      progressWrapper.classList.remove("hidden");
-      setProgress(0, 0);
-      log("Uploading CSV…");
-
-      let response;
-      try {
-        response = await fetch("/upload", { method: "POST", body: formData });
-      } catch (e) {
-        log("Could not reach the server. Is it running?");
-        progressWrapper.classList.add("hidden");
-        return;
-      }
-
-      let body = null;
-      try {
-        body = await response.json();
-      } catch (e) {
-        // non-JSON body
-      }
-
-      if (!response.ok || !body?.jobId) {
-        log(body?.error || "Server error.");
-        progressWrapper.classList.add("hidden");
-        return;
-      }
-
-      log("Downloading songs…");
-      progressTimer = setInterval(() => pollJob(body.jobId), 1000);
-    }
-  </script>
+  <script src="charts.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

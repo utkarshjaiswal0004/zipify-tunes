@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Organize songs · ZipifyTunes</title>
+  <link rel="stylesheet" href="app.css" />
+  <link rel="stylesheet" href="organize.css" />
+</head>
+
+<body>
+  <main class="app organize" id="organizePage">
+    <header class="app-header">
+      <a class="back-link" href="index.html">← Back to downloads</a>
+      <h1>Organize your <span>songs</span></h1>
+      <p class="tagline">
+        Scan a folder or pen drive, narrow the list down, then sort, rename, make a playlist or clean
+        out duplicates. You see every change before it happens, and you can undo it afterwards.
+      </p>
+    </header>
+
+    <!-- 1. where the songs are -->
+    <section class="card" aria-labelledby="folderHeading">
+      <h2 id="folderHeading">Folder</h2>
+
+      <div class="field">
+        <label for="folderPath">Folder with your songs</label>
+        <div class="save-row">
+          <input type="text" id="folderPath" list="driveList" spellcheck="false" autocomplete="off"
+            placeholder="/Volumes/PEN DRIVE" aria-describedby="folderHint">
+          <button type="button" id="chooseFolder" class="button secondary" data-target="folderPath">Choose…</button>
+        </div>
+        <datalist id="driveList"></datalist>
+        <p class="hint" id="folderHint">
+          Click Choose… (or a drive below) to pick a folder or pen drive and read its songs, or type
+          its full path and click Scan. Songs in the folders inside it are included. Scanning only
+          reads; nothing changes until you apply a plan.
+        </p>
+        <div class="drives hidden" id="drivesBox">
+          <span class="drives-label" id="drivesLabel">Plugged in:</span>
+          <ul class="drive-chips" id="driveChips" aria-labelledby="drivesLabel"></ul>
+        </div>
+      </div>
+
+      <div class="scan-row">
+        <div class="field depth-field">
+          <label for="scanDepth">Folders deep to look</label>
+          <select id="scanDepth" aria-describedby="depthHint">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+          </select>
+        </div>
+        <button type="button" id="scanButton" class="button primary">Scan</button>
+      </div>
+      <p class="hint" id="depthHint">Songs in deeper folders are left out. 4 suits most drives; raise it if songs are missing.</p>
+      <p class="scan-status" id="scanStatus" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 2. the songs found, filtered and sorted -->
+    <section class="card hidden" id="libraryPanel" aria-labelledby="libraryHeading">
+      <div class="card-head">
+        <h2 id="libraryHeading">Songs</h2>
+        <span class="library-root" id="libraryRoot"></span>
+      </div>
+      <ul class="summary-pills" id="summaryPills" aria-label="About these songs"></ul>
+
+      <details class="filters" id="filterBox" open>
+        <summary>Filters <span class="filter-count" id="filterCount"></span></summary>
+        <div class="filter-grid">
+          <div class="field filter-search">
+            <label for="filterText">Search</label>
+            <input type="search" id="filterText" placeholder="Title, artist, album or file name"
+              spellcheck="false" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="filterArtist">Artist</label>
+            <select id="filterArtist"></select>
+          </div>
+          <div class="field">
+            <label for="filterAlbum">Album</label>
+            <select id="filterAlbum"></select>
+          </div>
+          <div class="field">
+            <label for="filterGenre">Genre</label>
+            <select id="filterGenre"></select>
+          </div>
+          <div class="field">
+            <label for="filterFolder">Folder</label>
+            <select id="filterFolder"></select>
+          </div>
+          <fieldset class="field range">
+            <legend>Year</legend>
+            <div class="range-inputs">
+              <input type="number" id="yearFrom" min="1000" max="2999" step="1" inputmode="numeric"
+                placeholder="from" aria-label="Year from">
+              <span aria-hidden="true">–</span>
+              <input type="number" id="yearTo" min="1000" max="2999" step="1" inputmode="numeric"
+                placeholder="to" aria-label="Year to">
+            </div>
+          </fieldset>
+          <fieldset class="field range">
+            <legend>Length in minutes</legend>
+            <div class="range-inputs">
+              <input type="number" id="minLength" min="0" step="0.5" inputmode="decimal"
+                placeholder="from" aria-label="Shortest length, in minutes">
+              <span aria-hidden="true">–</span>
+              <input type="number" id="maxLength" min="0" step="0.5" inputmode="decimal"
+                placeholder="to" aria-label="Longest length, in minutes">
+            </div>
+          </fieldset>
+        </div>
+        <div class="filter-checks">
+          <label class="check"><input type="checkbox" id="untaggedOnly"> Untagged only (no title or artist)</label>
+          <label class="check"><input type="checkbox" id="duplicatesOnly"> Possible duplicates only (same title and artist)</label>
+          <button type="button" id="clearFilters" class="button secondary small" disabled>Clear filters</button>
+        </div>
+      </details>
+
+      <div class="selection-bar">
+        <div class="selection-buttons" role="group" aria-label="Select songs">
+          <button type="button" id="selectAll" class="button secondary small">Select all shown</button>
+          <button type="button" id="selectNone" class="button secondary small">Select none</button>
+          <button type="button" id="selectInvert" class="button secondary small">Invert</button>
+        </div>
+        <p class="selection-count" id="selectionCount" aria-live="polite">No songs selected</p>
+      </div>
+
+      <div class="table-scroll" id="songScroll">
+        <table class="song-table" aria-describedby="tableStatus">
+          <caption class="visually-hidden">Songs found, one per row. Tick the songs to change.</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="col-check">
+                <input type="checkbox" id="pageCheck" aria-label="Select every song on this page">
+              </th>
+              <th scope="col" id="head-title"><button type="button" class="sort-button" id="sort-title" data-sort="title" title="Sort by title">Title</button></th>
+              <th scope="col" id="head-artist"><button type="button" class="sort-button" id="sort-artist" data-sort="artist" title="Sort by artist">Artist</button></th>
+              <th scope="col" id="head-album"><button type="button" class="sort-button" id="sort-album" data-sort="album" title="Sort by album">Album</button></th>
+              <th scope="col" id="head-year" class="num"><button type="button" class="sort-button" id="sort-year" data-sort="year" title="Sort by year">Year</button></th>
+              <th scope="col" id="head-genre"><button type="button" class="sort-button" id="sort-genre" data-sort="genre" title="Sort by genre">Genre</button></th>
+              <th scope="col" id="head-length" class="num"><button type="button" class="sort-button" id="sort-length" data-sort="length" title="Sort by length">Length</button></th>
+              <th scope="col" id="head-size" class="num"><button type="button" class="sort-button" id="sort-size" data-sort="size" title="Sort by size">Size</button></th>
+              <th scope="col" id="head-folder"><button type="button" class="sort-button" id="sort-folder" data-sort="folder" title="Sort by folder">Folder</button></th>
+            </tr>
+          </thead>
+          <tbody id="songBody"></tbody>
+        </table>
+      </div>
+
+      <nav class="pager hidden" id="pager" aria-label="Pages of songs">
+        <button type="button" id="pagePrev" class="button secondary small">← Previous</button>
+        <span class="pager-text" id="pageText" aria-live="polite">Page 1 of 1</span>
+        <button type="button" id="pageNext" class="button secondary small">Next →</button>
+      </nav>
+      <p class="hint table-status" id="tableStatus"></p>
+    </section>
+
+    <!-- 3. what to do with the ticked songs -->
+    <section class="card hidden" id="actionsPanel" aria-labelledby="actionsHeading">
+      <h2 id="actionsHeading">What to do with them</h2>
+      <p class="hint action-selection" id="actionSelection"></p>
+
+      <div class="tabs" role="tablist" aria-labelledby="actionsHeading">
+        <button type="button" class="tab" role="tab" id="tab-sort" data-action="sort"
+          aria-controls="panel-sort" aria-selected="true">Sort into folders</button>
+        <button type="button" class="tab" role="tab" id="tab-rename" data-action="rename"
+          aria-controls="panel-rename" aria-selected="false" tabindex="-1">Rename files</button>
+        <button type="button" class="tab" role="tab" id="tab-playlist" data-action="playlist"
+          aria-controls="panel-playlist" aria-selected="false" tabindex="-1">Make a playlist</button>
+        <button type="button" class="tab" role="tab" id="tab-dedupe" data-action="dedupe"
+          aria-controls="panel-dedupe" aria-selected="false" tabindex="-1">Clean duplicates</button>
+      </div>
+
+      <div class="tab-panel" role="tabpanel" id="panel-sort" aria-labelledby="tab-sort" tabindex="0">
+        <p class="panel-intro">Puts the ticked songs into a folder for each artist, album, genre or year.</p>
+        <div class="field">
+          <label for="groupBy">Make a folder for each</label>
+          <select id="groupBy">
+            <option value="artist">Artist</option>
+            <option value="album">Album</option>
+            <option value="artist-album">Artist, with a folder per album inside</option>
+            <option value="genre">Genre</option>
+            <option value="year">Year</option>
+            <option value="decade">Decade (1990s, 2000s…)</option>
+            <option value="letter">First letter (A–Z, and # for the rest)</option>
+          </select>
+          <p class="hint">Songs without that tag go into "Unknown Artist", "Unknown Album" and so on.</p>
+        </div>
+        <div class="field">
+          <label for="sortTarget">Put the folders in <span class="optional">(optional)</span></label>
+          <div class="save-row">
+            <input type="text" id="sortTarget" list="driveList" spellcheck="false" autocomplete="off"
+              aria-describedby="sortTargetHint">
+            <button type="button" id="chooseSortTarget" class="button secondary" data-target="sortTarget">Choose…</button>
+          </div>
+          <p class="hint" id="sortTargetHint">Leave empty for a folder named "Organized" inside the folder you scanned.</p>
+        </div>
+        <fieldset class="field choice-group">
+          <legend>Copy or move?</legend>
+          <label class="check"><input type="radio" name="sortMode" id="sortCopy" value="copy" checked>
+            Copy: the originals stay where they are</label>
+          <label class="check"><input type="radio" name="sortMode" id="sortMove" value="move">
+            Move: take the songs out of their current folders</label>
+        </fieldset>
+      </div>
+
+      <div class="tab-panel hidden" role="tabpanel" id="panel-rename" aria-labelledby="tab-rename" tabindex="0">
+        <p class="panel-intro">
+          Gives the ticked songs new file names made from their tags. They stay in their folders;
+          a song missing a tag the name uses is skipped.
+        </p>
+        <div class="field">
+          <label for="renamePattern">New file name</label>
+          <input type="text" id="renamePattern" value="{artist} - {title}" spellcheck="false"
+            autocomplete="off" aria-describedby="renameExample">
+          <div class="token-row" role="group" aria-label="Add a tag to the name">
+            <button type="button" class="button secondary small token" id="token-artist" data-token="{artist}">{artist}</button>
+            <button type="button" class="button secondary small token" id="token-title" data-token="{title}">{title}</button>
+            <button type="button" class="button secondary small token" id="token-album" data-token="{album}">{album}</button>
+            <button type="button" class="button secondary small token" id="token-year" data-token="{year}">{year}</button>
+            <button type="button" class="button secondary small token" id="token-genre" data-token="{genre}">{genre}</button>
+            <button type="button" class="button secondary small token" id="token-track" data-token="{track}">{track}</button>
+          </div>
+          <p class="example" id="renameExample" aria-live="polite"></p>
+        </div>
+      </div>
+
+      <div class="tab-panel hidden" role="tabpanel" id="panel-playlist" aria-labelledby="tab-playlist" tabindex="0">
+        <p class="panel-intro">Puts the ticked songs into a new folder, ready for a car stereo.</p>
+        <div class="field">
+          <label for="playlistName">Playlist name</label>
+          <input type="text" id="playlistName" placeholder="Road trip" spellcheck="false" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="playlistTarget">Make the folder inside <span class="optional">(optional)</span></label>
+          <div class="save-row">
+            <input type="text" id="playlistTarget" list="driveList" spellcheck="false" autocomplete="off"
+              aria-describedby="playlistTargetHint">
+            <button type="button" id="choosePlaylistTarget" class="button secondary" data-target="playlistTarget">Choose…</button>
+          </div>
+          <p class="hint" id="playlistTargetHint">Leave empty to make it in the folder you scanned.</p>
+        </div>
+        <fieldset class="field choice-group">
+          <legend>Copy or move?</legend>
+          <label class="check"><input type="radio" name="playlistMode" id="playlistCopy" value="copy" checked>
+            Copy: the originals stay where they are</label>
+          <label class="check"><input type="radio" name="playlistMode" id="playlistMove" value="move">
+            Move: take the songs out of their current folders</label>
+        </fieldset>
+        <div class="extras-grid playlist-extras">
+          <div class="extra">
+            <input type="checkbox" id="numberTracks" checked aria-describedby="numberTracksHint">
+            <label for="numberTracks">Number the files in order (01 - …)</label>
+            <p class="hint" id="numberTracksHint">For stereos that play files in name order.</p>
+          </div>
+          <div class="extra">
+            <input type="checkbox" id="writePlaylist" checked aria-describedby="writePlaylistHint">
+            <label for="writePlaylist">Write a playlist file (.m3u)</label>
+            <p class="hint" id="writePlaylistHint">For stereos and players that read playlists.</p>
+          </div>
+        </div>
+        <p class="example" id="playlistOrder"></p>
+      </div>
+
+      <div class="tab-panel hidden" role="tabpanel" id="panel-dedupe" aria-labelledby="tab-dedupe" tabindex="0">
+        <p class="panel-intro">
+          Finds ticked songs with the same title and main artist (and about the same length); only
+          ticked songs are compared. One of each is kept; the other copies are moved into a
+          "_Duplicates" folder inside the folder you scanned. Nothing is deleted.
+        </p>
+        <fieldset class="field choice-group">
+          <legend>Which copy to keep</legend>
+          <label class="check"><input type="radio" name="dedupeKeep" id="keepLargest" value="largest" checked>
+            The biggest file (usually the best quality)</label>
+          <label class="check"><input type="radio" name="dedupeKeep" id="keepFirst" value="first">
+            The first one in the table's order</label>
+          <label class="check"><input type="radio" name="dedupeKeep" id="keepNewest" value="newest">
+            The newest file</label>
+        </fieldset>
+        <button type="button" id="selectDuplicates" class="button secondary small">Tick all possible duplicates</button>
+      </div>
+
+      <div class="plan-actions">
+        <button type="button" id="previewButton" class="button secondary">Preview</button>
+        <button type="button" id="applyButton" class="button primary" disabled>Apply</button>
+      </div>
+      <p class="action-message" id="actionMessage" role="status" aria-live="polite"></p>
+
+      <div class="plan hidden" id="planBox">
+        <h3 class="plan-heading" id="planHeading">Preview</h3>
+        <ul class="summary-pills" id="planSummary" aria-label="What the preview would do"></ul>
+        <ul class="conflicts" id="planConflicts" aria-label="Songs that would be skipped"></ul>
+        <div class="table-scroll plan-scroll">
+          <table class="plan-table" aria-labelledby="planHeading">
+            <thead>
+              <tr>
+                <th scope="col" class="col-kind">Change</th>
+                <th scope="col">From</th>
+                <th scope="col">To</th>
+              </tr>
+            </thead>
+            <tbody id="planBody"></tbody>
+          </table>
+        </div>
+        <button type="button" id="planMore" class="button secondary small plan-more hidden">Show more</button>
+      </div>
+    </section>
+
+    <!-- 4. the latest change: its progress, how it ended, and its undo -->
+    <section class="card hidden" id="changePanel" aria-labelledby="changeHeading">
+      <h2 id="changeHeading">Last change</h2>
+      <p class="change-label" id="changeLabel"></p>
+      <div class="progress hidden" id="changeProgress" data-state="running" role="progressbar"
+        aria-labelledby="changeHeading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="progress-fill" id="changeBar"></div>
+      </div>
+      <p class="change-result" id="changeResult" role="status" aria-live="polite"></p>
+      <ul class="failed-list" id="changeFailed" aria-label="Changes that didn't work"></ul>
+      <div class="change-actions">
+        <button type="button" id="undoButton" class="button danger hidden">Undo</button>
+        <button type="button" id="forgetButton" class="button secondary hidden">Don't show again</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <a href="index.html">← Back to downloads</a>
+    </footer>
+  </main>
+
+  <script src="organize.js"></script>
+</body>
+</html>
